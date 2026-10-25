@@ -1,0 +1,6 @@
+{
+  "appId": "com.vibeplay.app",
+  "appName": "VibePlay",
+  "webDir": "dist",
+  "android": { "backgroundColor": "#0b0b12" }
+}
