@@ -25,8 +25,6 @@ interface UIValue {
   setFullScreenOpen: (v: boolean) => void;
   queueOpen: boolean;
   setQueueOpen: (v: boolean) => void;
-  shortcutsOpen: boolean;
-  setShortcutsOpen: (v: boolean) => void;
 
   /** Dialog state, rendered by <Dialogs /> */
   createPlaylistFor: string[] | null;
@@ -63,7 +61,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [accent, setAccentState] = useState<AccentId>(readAccent);
   const [fullScreenOpen, setFullScreenOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [createPlaylistFor, setCreateFor] = useState<string[] | null>(null);
   const [renameTarget, setRenameTarget] = useState<Playlist | null>(null);
   const [addToPlaylistFor, setAddFor] = useState<string[] | null>(null);
@@ -125,8 +122,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
       setFullScreenOpen,
       queueOpen,
       setQueueOpen,
-      shortcutsOpen,
-      setShortcutsOpen,
       createPlaylistFor,
       openCreatePlaylist: (ids = []) => setCreateFor(ids),
       closeCreatePlaylist: () => setCreateFor(null),
@@ -141,7 +136,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
       closeConfirm: () => setConfirmState(null),
       pickFiles,
     }),
-    [theme, setTheme, toggleTheme, accent, setAccent, fullScreenOpen, queueOpen, shortcutsOpen, createPlaylistFor, renameTarget, addToPlaylistFor, confirmState, pickFiles],
+    [theme, setTheme, toggleTheme, accent, setAccent, fullScreenOpen, queueOpen, createPlaylistFor, renameTarget, addToPlaylistFor, confirmState, pickFiles],
   );
 
   return (

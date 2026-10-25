@@ -42,7 +42,7 @@ export function runSearch(query: string, data: SearchData): SearchResults {
   if (!tokens.length) return { songs: [], albums: [], artists: [], playlists: [], total: 0 };
 
   const songs = rank(data.songs, (s) =>
-    Math.max(score(s.title, tokens) * 2, score(`${s.title} ${s.artist} ${s.album} ${s.genre ?? ''}`, tokens)),
+    Math.max(score(s.title, tokens) * 2, score(`${s.title} ${s.artist} ${s.album}`, tokens)),
   );
   const albums = rank(data.albums, (a) => Math.max(score(a.title, tokens) * 2, score(`${a.title} ${a.artist}`, tokens)));
   const artists = rank(data.artists, (a) => score(a.name, tokens));
@@ -50,7 +50,7 @@ export function runSearch(query: string, data: SearchData): SearchResults {
   return { songs, albums, artists, playlists, total: songs.length + albums.length + artists.length + playlists.length };
 }
 
-/** Autocomplete strings (titles, artists, albums, genres) that match what has been typed so far. */
+/** Autocomplete strings (titles, artists, albums) that match what has been typed so far. */
 export function suggest(query: string, data: SearchData, limit = 6): string[] {
   const q = normalize(query);
   if (!q) return [];
@@ -59,7 +59,6 @@ export function suggest(query: string, data: SearchData, limit = 6): string[] {
   data.albums.forEach((a) => pool.add(a.title));
   data.songs.forEach((s) => {
     pool.add(s.title);
-    if (s.genre) pool.add(s.genre);
   });
   const matches = Array.from(pool).filter((p) => normalize(p).includes(q) && normalize(p) !== q);
   matches.sort((a, b) => {

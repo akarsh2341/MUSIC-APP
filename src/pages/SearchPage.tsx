@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Clock, SearchX, TrendingUp, X } from 'lucide-react';
+import { Clock, Search, SearchX, X } from 'lucide-react';
 import { AlbumCard, ArtistCard, PlaylistCard } from '../components/Cards';
 import { SearchBar } from '../components/SearchBar';
 import { SongList } from '../components/SongList';
 import { EmptyState, PageSkeleton, SectionHeader } from '../components/ui';
 import { useLibrary } from '../context/LibraryContext';
-import { fallbackGradient } from '../lib/art';
 import { runSearch } from '../lib/search';
-import { cn, pluralize } from '../lib/utils';
+import { cn } from '../lib/utils';
 
 type Filter = 'all' | 'songs' | 'albums' | 'artists' | 'playlists';
 const FILTERS: Array<{ id: Filter; label: string }> = [
@@ -27,12 +26,6 @@ export default function SearchPage() {
 
   const allPlaylists = useMemo(() => [...playlists, ...mixes], [playlists, mixes]);
   const results = useMemo(() => runSearch(q, { songs, albums, artists, playlists: allPlaylists }), [q, songs, albums, artists, allPlaylists]);
-  const genres = useMemo(() => {
-    const counts = new Map<string, number>();
-    songs.forEach((s) => s.genre && counts.set(s.genre, (counts.get(s.genre) || 0) + 1));
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-  }, [songs]);
-  const trending = useMemo(() => [...artists].sort((a, b) => b.songIds.length - a.songIds.length).slice(0, 6), [artists]);
 
   const search = (text: string) => {
     addRecentSearch(text);
@@ -71,39 +64,12 @@ export default function SearchPage() {
             </section>
           )}
 
-          <section className="mb-8" aria-label="Trending">
-            <SectionHeader title="Trending now" />
-            <ul className="flex flex-wrap gap-2">
-              {trending.map((a) => (
-                <li key={a.id}>
-                  <button className="chip gap-2" onClick={() => search(a.name)}>
-                    <TrendingUp className="h-3.5 w-3.5 text-brand" /> {a.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section aria-label="Browse by genre">
-            <SectionHeader title="Browse all" subtitle="Jump into a genre" />
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {genres.map(([g, n]) => (
-                <li key={g}>
-                  <button
-                    onClick={() => search(g)}
-                    className="relative flex h-24 w-full flex-col justify-between overflow-hidden rounded-2xl p-3.5 text-left text-white shadow-lg transition hover:scale-[1.02] active:scale-95"
-                    style={{ background: fallbackGradient(g) }}
-                  >
-                    <span className="text-lg font-extrabold drop-shadow">{g}</span>
-                    <span className="text-xs font-medium text-white/80">{pluralize(n, 'song')}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {recentSearches.length === 0 && (
+            <EmptyState icon={<Search className="h-6 w-6" />} title="Search your music" message="Find songs, albums, artists and playlists in your library." />
+          )}
         </>
       ) : results.total === 0 ? (
-        <EmptyState icon={<SearchX className="h-6 w-6" />} title={`No results for “${q}”`} message="Check the spelling, or try a different song, artist, album or genre." action={<button className="btn-ghost" onClick={() => setParams({})}>Clear search</button>} />
+        <EmptyState icon={<SearchX className="h-6 w-6" />} title={`No results for “${q}”`} message="Check the spelling, or try a different song, artist or album." action={<button className="btn-ghost" onClick={() => setParams({})}>Clear search</button>} />
       ) : (
         <>
           <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filter results">

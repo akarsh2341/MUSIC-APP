@@ -1,3 +1,4 @@
+import { MediaSession, artworkForNotification, getPauseOnDisconnect, requestNotificationAccess, safeCall } from '../lib/mediaSession';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { RepeatMode, Song } from '../types';
 import { readJSON, writeJSON } from '../lib/storage';
@@ -335,12 +336,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       timeStore.set(a.currentTime);
       lastPosition.current = a.currentTime;
       if (Date.now() - lastPersist.current > 5000) persistSession();
-      if ('mediaSession' in navigator && Number.isFinite(a.duration) && a.duration > 0) {
-        try {
-          navigator.mediaSession.setPositionState({ duration: a.duration, playbackRate: a.playbackRate, position: Math.min(a.currentTime, a.duration) });
-        } catch {
-          /* unsupported */
-        }
+      if (Number.isFinite(a.duration) && a.duration > 0) {
+        safeCall(() => MediaSession.setPositionState({ duration: a.duration, playbackRate: a.playbackRate || 1, position: Math.min(a.currentTime, a.duration) }));
       }
     };
     const onEnded = () => {
@@ -682,19 +679,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [advance, cancelFade, goTo, safePlay, setCore, startTrack, stopPlayback]);
 
-  /* ---------------- Media Session (lock screen / hardware keys / background playback) ---------------- */
+  /* ---------------- Media Session (Bluetooth / headset buttons, lock screen, background playback) ---------------- */
   useEffect(() => {
-    if (!('mediaSession' in navigator)) return;
-    const ms = navigator.mediaSession;
-    const set = (action: MediaSessionAction, fn: MediaSessionActionHandler) => {
-      try {
-        ms.setActionHandler(action, fn);
-      } catch {
-        /* action unsupported */
-      }
-    };
+    const set = (action: MediaSessionAction, fn: (d: { seekTime?: number | null; seekOffset?: number }) => void) =>
+      safeCall(() => MediaSession.setActionHandler({ action }, fn));
     set('play', () => safePlay());
     set('pause', () => getAudio().pause());
+    set('stop', () => getAudio().pause());
     set('previoustrack', () => actions.prev());
     set('nexttrack', () => actions.next());
     set('seekbackward', (d) => actions.seekBy(-(d.seekOffset || 10)));
@@ -705,26 +696,50 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [actions, safePlay]);
 
   useEffect(() => {
-    if (!('mediaSession' in navigator)) return;
-    if (!current) {
-      navigator.mediaSession.metadata = null;
-      return;
-    }
-    try {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: current.title,
-        artist: current.artist,
-        album: current.album,
-        artwork: [{ src: current.artwork, sizes: '600x600', type: current.artwork.startsWith('data:image/svg') ? 'image/svg+xml' : undefined }],
-      });
-    } catch {
-      /* ignore */
-    }
+    if (!current) return;
+    let cancelled = false;
+    const base = { title: current.title, artist: current.artist, album: current.album };
+    safeCall(() => MediaSession.setMetadata(base));
+    void artworkForNotification(current.artwork).then((src) => {
+      if (cancelled || !src) return;
+      safeCall(() => MediaSession.setMetadata({ ...base, artwork: [{ src, sizes: '256x256', type: src.startsWith('data:image/png') ? 'image/png' : undefined }] }));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [current]);
 
   useEffect(() => {
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = current ? (isPlaying ? 'playing' : 'paused') : 'none';
+    safeCall(() => MediaSession.setPlaybackState({ playbackState: current ? (isPlaying ? 'playing' : 'paused') : 'none' }));
   }, [isPlaying, current]);
+
+  // Ask once (Android 13+) so the notification with playback controls can appear.
+  const askedNotif = useRef(false);
+  useEffect(() => {
+    if (!isPlaying || askedNotif.current) return;
+    askedNotif.current = true;
+    void requestNotificationAccess();
+  }, [isPlaying]);
+
+  // Pause when Bluetooth headphones / headset disconnect (best effort: relies on the WebView reporting device changes).
+  useEffect(() => {
+    const md = navigator.mediaDevices;
+    if (!md?.enumerateDevices || !md.addEventListener) return;
+    let known = -1;
+    const count = async () => (await md.enumerateDevices()).filter((d) => d.kind === 'audiooutput').length;
+    void count().then((n) => (known = n)).catch(() => undefined);
+    const onChange = async () => {
+      try {
+        const n = await count();
+        if (known > n && getPauseOnDisconnect() && !getAudio().paused) getAudio().pause();
+        known = n;
+      } catch {
+        /* ignore */
+      }
+    };
+    md.addEventListener('devicechange', onChange);
+    return () => md.removeEventListener('devicechange', onChange);
+  }, []);
 
   const state = useMemo<PlayerState>(
     () => ({ ...core, current, isPlaying, isLoading, error, duration, volume, muted }),

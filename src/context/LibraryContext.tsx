@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Playlist, Song } from '../types';
-import { CATALOG } from '../data/catalog';
 import { dbClear, dbDel, dbGet, dbSet } from '../lib/db';
 import { makeCover } from '../lib/art';
 import { buildIndex, buildMixes, type HistoryEntry, type LibraryIndex } from '../lib/library';
@@ -151,8 +150,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 
   // ---- Derived data ----
   const songs = useMemo(() => {
-    const all = [...CATALOG, ...local];
-    return all.map((s) => (durations[s.id] && Math.abs(durations[s.id] - s.duration) > 0.5 ? { ...s, duration: durations[s.id] } : s));
+    return local.map((s) => (durations[s.id] && Math.abs(durations[s.id] - s.duration) > 0.5 ? { ...s, duration: durations[s.id] } : s));
   }, [local, durations]);
 
   const index = useMemo(() => buildIndex(songs), [songs]);

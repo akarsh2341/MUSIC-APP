@@ -1,11 +1,10 @@
-import { Check, Info, Keyboard, Moon, Music, Palette, RotateCcw, SlidersHorizontal, Sun, Trash2, Upload } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { ShortcutList } from '../components/Dialogs';
-import { Logo } from '../components/Logo';
-import { ACCENTS, APP_NAME, APP_TAGLINE, APP_VERSION } from '../config';
+import { Bluetooth, Check, Moon, Music, Palette, RotateCcw, SlidersHorizontal, Sun, Trash2, Upload } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { ACCENTS } from '../config';
 import { useLibrary } from '../context/LibraryContext';
 import { useUI } from '../context/UIContext';
 import { EQ_LABELS, EQ_PRESETS, EQ_RANGE, resetEq, setEqBand, setEqEnabled, setEqPreset, useEqualizer } from '../lib/equalizer';
+import { getPauseOnDisconnect, isNative, requestNotificationAccess, setPauseOnDisconnect } from '../lib/mediaSession';
 import { toast } from '../lib/toast';
 import { cn, pluralize } from '../lib/utils';
 
@@ -29,6 +28,43 @@ function Row({ title, hint, children }: { title: string; hint?: string; children
       </div>
       <div className="flex flex-wrap items-center gap-2">{children}</div>
     </div>
+  );
+}
+
+function BluetoothSection() {
+  const [pauseOnDisconnect, setPause] = useState(getPauseOnDisconnect);
+  const enableNotifications = async () => {
+    const res = await requestNotificationAccess();
+    toast(res === 'granted' ? 'Notification controls enabled' : res === 'denied' ? 'Allow notifications for VibePlay in system settings' : 'Not needed on this device');
+  };
+  return (
+    <Section icon={<Bluetooth className="h-5 w-5" />} title="Bluetooth & headset">
+      <Row title="Headset and Bluetooth buttons" hint={isNative ? 'Play, pause, next and previous from Bluetooth headphones, earbuds, car stereos and watches are active. Playback continues with the screen off.' : 'Media keys and headset buttons control playback in this browser. Install the Android app for full Bluetooth support.'}>
+        <span className="chip" aria-label="Active">Active</span>
+      </Row>
+      <Row title="Pause when headphones disconnect" hint="Stops the music if your Bluetooth device or headphones switch off or unplug.">
+        <button
+          role="switch"
+          aria-checked={pauseOnDisconnect}
+          aria-label="Pause when headphones disconnect"
+          onClick={() => {
+            const next = !pauseOnDisconnect;
+            setPause(next);
+            setPauseOnDisconnect(next);
+          }}
+          className={cn('relative h-7 w-12 rounded-full transition', pauseOnDisconnect ? 'bg-brand' : 'bg-elevated border border-line/20')}
+        >
+          <span className={cn('absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all', pauseOnDisconnect ? 'left-[22px]' : 'left-0.5')} />
+        </button>
+      </Row>
+      {isNative && (
+        <Row title="Notification controls" hint="Show play, pause, next and previous in the notification shade and on the lock screen.">
+          <button className="btn-ghost" onClick={enableNotifications}>
+            Enable
+          </button>
+        </Row>
+      )}
+    </Section>
   );
 }
 
@@ -162,6 +198,8 @@ export default function SettingsPage() {
 
       <EqualizerSection />
 
+      <BluetoothSection />
+
       <Section icon={<Music className="h-5 w-5" />} title="Your music">
         <Row title="Add your own music" hint="MP3, M4A, WAV, OGG, FLAC and more. Files stay on this device (IndexedDB).">
           <button className="btn-primary" onClick={pickFiles}>
@@ -195,29 +233,6 @@ export default function SettingsPage() {
             <RotateCcw className="h-4 w-4" /> Reset library
           </button>
         </Row>
-      </Section>
-
-      <Section icon={<Keyboard className="h-5 w-5" />} title="Keyboard shortcuts">
-        <ShortcutList />
-      </Section>
-
-      <Section icon={<Info className="h-5 w-5" />} title="About">
-        <div className="mb-4 flex items-center gap-3">
-          <Logo showName={false} />
-          <div>
-            <p className="font-bold">
-              {APP_NAME} <span className="text-xs font-medium text-muted">v{APP_VERSION}</span>
-            </p>
-            <p className="text-sm text-muted">{APP_TAGLINE}</p>
-          </div>
-        </div>
-        <p className="text-sm leading-relaxed text-muted">
-          The demo catalog uses algorithmically generated example tracks from{' '}
-          <a className="font-semibold text-brand hover:underline" href="https://www.soundhelix.com" target="_blank" rel="noreferrer">
-            SoundHelix
-          </a>
-          , which are free to use. Artist and album names are fictional and the artwork is generated locally. {APP_NAME} is a demo player, not a commercial music catalog.
-        </p>
       </Section>
     </div>
   );

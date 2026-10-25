@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Clock, Search, TrendingUp, X } from 'lucide-react';
+import { Clock, Search, X } from 'lucide-react';
 import { useLibrary } from '../context/LibraryContext';
 import { suggest } from '../lib/search';
 import { cn } from '../lib/utils';
@@ -36,11 +36,9 @@ export function SearchBar({ dropdown = true, id, className, autoFocus }: { dropd
   }, [value, urlQ, pathname, navigate, setParams]);
 
   const suggestions = useMemo(() => suggest(value, { songs, albums, artists, playlists }), [value, songs, albums, artists, playlists]);
-  const trending = useMemo(() => [...artists].sort((a, b) => b.songIds.length - a.songIds.length).slice(0, 5).map((a) => a.name), [artists]);
 
   const entries = value.trim() ? suggestions.map((s) => ({ text: s, kind: 'suggestion' as const })) : [
     ...recentSearches.map((s) => ({ text: s, kind: 'recent' as const })),
-    ...trending.map((s) => ({ text: s, kind: 'trending' as const })),
   ];
 
   const open = dropdown && focused && entries.length > 0;
@@ -127,7 +125,6 @@ export function SearchBar({ dropdown = true, id, className, autoFocus }: { dropd
           )}
           {entries.map((e, i) => (
             <li key={`${e.kind}-${e.text}`} role="presentation">
-              {!value.trim() && e.kind === 'trending' && i === recentSearches.length && <div className="px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-wider text-muted">Trending</div>}
               <div
                 id={`${listId}-${i}`}
                 role="option"
@@ -137,7 +134,7 @@ export function SearchBar({ dropdown = true, id, className, autoFocus }: { dropd
                 onClick={() => commit(e.text)}
                 className={cn('flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm', i === active ? 'bg-line/10' : 'hover:bg-line/5')}
               >
-                {e.kind === 'recent' ? <Clock className="h-4 w-4 text-muted" /> : e.kind === 'trending' ? <TrendingUp className="h-4 w-4 text-muted" /> : <Search className="h-4 w-4 text-muted" />}
+                {e.kind === 'recent' ? <Clock className="h-4 w-4 text-muted" /> : <Search className="h-4 w-4 text-muted" />}
                 <span className="flex-1 truncate">{e.text}</span>
                 {e.kind === 'recent' && (
                   <button

@@ -23,6 +23,8 @@ jobs:
           npx cap add android
           npx capacitor-assets generate --android
           npx cap sync android
+          # Bluetooth/media-button playback needs these on Android 13/14+
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
       - name: Build debug APK
         run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
         working-directory: android

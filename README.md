@@ -23,8 +23,7 @@ Open http://localhost:5173.
 | `npm run preview`   | Serve the production build locally    |
 | `npm run typecheck` | TypeScript check only                 |
 
-The demo tracks stream from the internet, so you need a connection for them to play. Your own
-uploaded files work offline.
+VibePlay ships with no music. Use **Add music** to add your own files; they work offline.
 
 ## Build and host with GitHub
 
@@ -45,11 +44,9 @@ a sub-path and has no single-page-app fallback. Local `npm run dev` is unaffecte
 ## Features
 
 - **Playback**: play/pause, next/previous, seek bar with time, volume and mute, shuffle, repeat
-  (off/all/one), queue management, smooth track changes, media-key and lock-screen controls
-  (Media Session API), and a single shared `Audio` instance so playback continues across pages
+  (off/all/one), queue management, smooth track changes, Bluetooth/headset buttons and lock-screen controls, and a single shared `Audio` instance so playback continues across pages
   and keeps its position when the full-screen player opens or closes.
-- **Home**: recently played, recommendations, popular albums and artists, recently added,
-  personalised mixes, quick access to the library.
+- **Home**: recently played, personalised mixes, playlists, recently added, quick access to the library.
 - **Search**: songs, albums, artists and playlists, with live results, suggestions, recent
   searches, loading and empty states.
 - **Library**: all songs, albums, artists, playlists, liked songs, recently played, with sorting
@@ -61,24 +58,15 @@ a sub-path and has no single-page-app fallback. Local `npm run dev` is unaffecte
 - **Persistence**: playlists, likes, history, library and settings survive reloads.
 - **Polish**: light and dark themes, five accent colours, toasts, error and retry states for
   unavailable audio, generated artwork that can never 404.
-- **Accessibility**: labelled controls, keyboard navigation, focus handling in dialogs.
+- **Accessibility**: labelled controls and focus handling in dialogs.
 
-## Keyboard shortcuts
+## Bluetooth and headset controls
 
-| Key                     | Action                          |
-| ----------------------- | ------------------------------- |
-| `Space` / `K`           | Play / pause                    |
-| `←` / `→`               | Seek back / forward 5 seconds   |
-| `Shift+←` / `Shift+→`   | Previous / next (also `P` / `N`)|
-| `↑` / `↓`               | Volume up / down                |
-| `M`                     | Mute                            |
-| `S`                     | Shuffle                         |
-| `R`                     | Cycle repeat                    |
-| `L`                     | Like current song               |
-| `Q`                     | Open / close queue              |
-| `F`                     | Open / close full-screen player |
-| `/`                     | Focus search                    |
-| `?`                     | Show shortcuts                  |
+In the Android app, Bluetooth headphones, earbuds, car stereos and watches can play, pause and skip
+tracks, and the notification shade / lock screen show playback controls. Audio keeps playing with the
+screen off (a native media session and foreground service via `@jofr/capacitor-media-session`).
+Settings > Bluetooth & headset lets you pause automatically when headphones disconnect and enable
+notification controls. In a browser, media keys and headset buttons use the standard Media Session API.
 
 ## Project structure
 
@@ -93,7 +81,6 @@ vibeplay/
 │   ├── config.ts              # App name, tagline, accent presets
 │   ├── index.css              # Theme variables and shared component classes
 │   ├── types.ts               # Song, Album, Playlist, ... types
-│   ├── data/catalog.ts        # Centralised demo music data
 │   ├── context/
 │   │   ├── PlayerContext.tsx  # Audio engine, queue, shuffle/repeat, Media Session
 │   │   ├── LibraryContext.tsx # Playlists, likes, history, uploads, persistence
@@ -113,17 +100,6 @@ vibeplay/
   `VITE_APP_TAGLINE`. Restart the dev server.
 - **Colours**: edit the CSS variables in `src/index.css` (`--bg`, `--surface`, `--brand`,
   `--accent`, ...), or add a preset to `ACCENTS` in `src/config.ts`.
-- **Music**: edit `src/data/catalog.ts`. Each song needs `id`, `title`, `artist`, `album`,
-  `artwork`, `duration` (seconds; corrected from the real file's metadata once loaded) and
-  `audioUrl`.
-
-## Music and licensing
-
-The 16 demo tracks are the "SoundHelix" example songs from https://www.soundhelix.com, which are
-algorithmically generated and published for free use in demos. Artist, album and title names are
-fictional, and all artwork is generated locally. VibePlay does **not** include a commercial music
-catalogue. To offer one you would need to integrate a licensed provider. Don't point `audioUrl`
-at copyrighted streams you aren't authorised to use.
 
 ## Notes
 

@@ -153,40 +153,6 @@ export function Dialogs() {
       >
         <p className="text-sm text-muted">{ui.confirmState?.message}</p>
       </Modal>
-
-      {/* Keyboard shortcuts */}
-      <Modal open={ui.shortcutsOpen} onClose={() => ui.setShortcutsOpen(false)} title="Keyboard shortcuts" className="max-w-lg">
-        <ShortcutList />
-      </Modal>
     </>
-  );
-}
-
-export const SHORTCUTS: Array<[string, string]> = [
-  ['Space  or  K', 'Play / pause'],
-  ['→  /  ←', 'Seek forward / back 5 seconds'],
-  ['Shift + →  /  Shift + ←', 'Next / previous track  (also N / P)'],
-  ['↑  /  ↓', 'Volume up / down'],
-  ['M', 'Mute / unmute'],
-  ['S', 'Toggle shuffle'],
-  ['R', 'Cycle repeat mode'],
-  ['L', 'Like the current song'],
-  ['Q', 'Open / close the queue'],
-  ['F', 'Open / close the full-screen player'],
-  ['/', 'Focus search'],
-  ['?', 'Show this help'],
-  ['Esc', 'Close the topmost panel'],
-];
-
-export function ShortcutList() {
-  return (
-    <dl className="divide-y divide-line/10 pb-4 text-sm">
-      {SHORTCUTS.map(([keys, label]) => (
-        <div key={keys} className="flex items-center justify-between gap-4 py-2.5">
-          <dt className="text-muted">{label}</dt>
-          <dd className="shrink-0 rounded-md border border-line/15 bg-elevated px-2 py-0.5 font-mono text-xs">{keys}</dd>
-        </div>
-      ))}
-    </dl>
   );
 }
